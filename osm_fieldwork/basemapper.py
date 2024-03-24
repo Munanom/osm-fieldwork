@@ -283,27 +283,32 @@ class BaseMapper(object):
         Returns:
             (list): The bounding box coordinates
         """
-        if not boundary.lower().endswith((".json", ".geojson")):
-            # Is BBOX string
-            try:
-                if "," in boundary:
-                    bbox_parts = boundary.split(",")
-                else:
-                    bbox_parts = boundary.split(" ")
-                bbox = tuple(float(x) for x in bbox_parts)
-                if len(bbox) == 4:
-                    # BBOX valid
-                    return bbox
-                else:
-                    msg = f"BBOX string malformed: {bbox}"
+        if isinstance(boundary, str):
+            if not boundary.lower().endswith((".json", ".geojson")):
+                # Is BBOX string
+                try:
+                    if "," in boundary:
+                        bbox_parts = boundary.split(",")
+                    else:
+                        bbox_parts = boundary.split(" ")
+                    bbox = tuple(float(x) for x in bbox_parts)
+                    if len(bbox) == 4:
+                        # BBOX valid
+                        return bbox
+                    else:
+                        msg = f"BBOX string malformed: {bbox}"
+                        log.error(msg)
+                        raise ValueError(msg) from None
+                except Exception as e:
+                    log.error(e)
+                    msg = f"Failed to parse BBOX string: {boundary}"
                     log.error(msg)
                     raise ValueError(msg) from None
-            except Exception as e:
-                log.error(e)
-                msg = f"Failed to parse BBOX string: {boundary}"
-                log.error(msg)
-                raise ValueError(msg) from None
-
+        else:
+            msg =f"Boundary expects string: {boundary}"
+            log.error(msg)
+            raise ValueError(msg) from None
+            
         log.debug(f"Reading geojson file: {boundary}")
         with open(boundary, "r") as f:
             poly = geojson.load(f)
